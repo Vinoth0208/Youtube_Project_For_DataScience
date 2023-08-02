@@ -1,6 +1,7 @@
 from googleapiclient.discovery import build
 
 api_key = open("api.txt").read()
+
 youtube = build('youtube', 'v3', developerKey=api_key)
 def collectDataFromYoutubeForChannels(channel_id):
     channel_id=channel_id
