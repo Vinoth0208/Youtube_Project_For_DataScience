@@ -1,6 +1,8 @@
 import json
 
 import pandas as pd
+import pymongo
+from pymongo.server_api import ServerApi
 
 from DataCollection import *
 import streamlit as st
@@ -9,9 +11,14 @@ import streamlit as st
 st.set_page_config(
     page_title="YouTube Data Harvesting and Warehousing",
 )
-
+st.header("Youtbube Data Harvesting and Warehousing")
+st.text("""This page lets you to paste a youtube channel id and
+get the basic informations of the channel and on click of a 
+button you can add your data to Mongo DB Atlas Data lake""")
 channel_id=st.text_input("channel_id")
 state = st.button("Get Data")
+channel_informations={}
+
 def callfunctionstocollectData(channel_id):
     ChannelData = collectDataFromYoutubeForChannels(channel_id)
     channel_informations = {
@@ -68,8 +75,39 @@ def callfunctionstocollectData(channel_id):
         }
 
     channel_informations.update(videoDataList)
-    st.write(channel_informations)
 
-    df=pd.DataFrame.from_dict(channel_informations)
+    return channel_informations
+
+
+# if 'channel_informations' not in st.session_state:
+#     st.session_state.channel_informations = None
 if state:
-    callfunctionstocollectData(channel_id)
+    st.session_state.channel_informations=callfunctionstocollectData(channel_id)
+    st.caption(":blue[Channel Name:]")
+    channelName=st.session_state.channel_informations['Channel_Name']['channel_name']
+    channel_id=st.session_state.channel_informations['Channel_Name']['channel_id']
+    subscription_Count=st.session_state.channel_informations['Channel_Name']['subscription_Count']
+    channel_views=st.session_state.channel_informations['Channel_Name']['channel_views']
+    channel_description=st.session_state.channel_informations['Channel_Name']['channel_description']
+    st.subheader(":blue[Channel Name:]")
+    st.write(f':red[{channelName}]')
+    st.subheader(":blue[Channel Id:]")
+    st.write(f':red[{channel_id}]')
+    st.subheader(":blue[Subscription_Count:]")
+    st.write(f':red[{subscription_Count}]')
+    st.subheader(":blue[Channel_views:]")
+    st.write(f':red[{channel_views}]')
+    st.subheader(":blue[Channel_description:]")
+    st.write(f':red[{channel_description}]')
+
+UploadState = st.button("Upload Data to Mongo DB")
+if UploadState:
+    client = pymongo.MongoClient(
+            "mongodb+srv://cluster0.45tmhd1.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority",
+            tls=True, tlsCertificateKeyFile='C:\\Users\\Vinoth\\Downloads\\X509-cert-5084476662482489136.pem',
+            server_api=ServerApi('1'))
+    db = client["youtube"]
+    db.YTData.insert_one(st.session_state.channel_informations)
+    st.write(st.session_state.channel_informations)
+
+
