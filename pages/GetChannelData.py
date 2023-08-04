@@ -79,9 +79,10 @@ def callfunctionstocollectData(channel_id):
     return channel_informations
 
 
-# if 'channel_informations' not in st.session_state:
-#     st.session_state.channel_informations = None
-if state:
+if "ChState" not in st.session_state:
+  st.session_state.ChState = False
+if state or st.session_state.ChState :
+    st.session_state.ChState=True
     st.session_state.channel_informations=callfunctionstocollectData(channel_id)
     st.caption(":blue[Channel Name:]")
     channelName=st.session_state.channel_informations['Channel_Name']['channel_name']
@@ -100,14 +101,39 @@ if state:
     st.subheader(":blue[Channel_description:]")
     st.write(f':red[{channel_description}]')
 
-UploadState = st.button("Upload Data to Mongo DB")
-if UploadState:
-    client = pymongo.MongoClient(
-            "mongodb+srv://cluster0.45tmhd1.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority",
-            tls=True, tlsCertificateKeyFile='C:\\Users\\Vinoth\\Downloads\\X509-cert-5084476662482489136.pem',
-            server_api=ServerApi('1'))
-    db = client["youtube"]
-    db.YTData.insert_one(st.session_state.channel_informations)
-    st.write(st.session_state.channel_informations)
+    UploadState = st.button("Upload Data to Mongo DB")
+    if UploadState:
+        client = pymongo.MongoClient(
+                "mongodb+srv://cluster0.45tmhd1.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority",
+                tls=True, tlsCertificateKeyFile='C:\\Users\\Vinoth\\Downloads\\X509-cert-5084476662482489136.pem',
+                server_api=ServerApi('1'))
+        db = client["youtube"]
+        db.YTData.insert_one(st.session_state.channel_informations)
+        st.write(st.session_state.channel_informations)
 
 
+    channelOptions = pymongo.MongoClient(
+                "mongodb+srv://cluster0.45tmhd1.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority",
+                tls=True, tlsCertificateKeyFile='C:\\Users\\Vinoth\\Downloads\\X509-cert-5084476662482489136.pem',
+                server_api=ServerApi('1'))
+    db = channelOptions["youtube"]
+    s=db.YTData.find({},{"Channel_Name":1,"_id":0})
+    opt=[]
+    for i in s:
+        opt.append(i["Channel_Name"]["channel_name"])
+
+
+
+    selected=st.selectbox("Select a Channel Name to migrate data to SQL:",opt)
+    migrateState = st.button("Migrate Data to SQL")
+    if migrateState:
+        ss = db.YTData.find({"Channel_Name.channel_name":selected}, {"_id": 0})
+        for j in ss:
+            df = pd.DataFrame.from_dict(j)
+            dff=df[df["Channel_Name"].notnull()]
+            ChannelDf=dff["Channel_Name"]
+            st.write(ChannelDf)
+            vdf=df.drop(columns="Channel_Name")
+            vdff=vdf.dropna()
+            vdfff=vdff[:-1]
+            st.write(vdfff.transpose)
