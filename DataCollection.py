@@ -16,7 +16,7 @@ def collectDataFromYoutubeForPlaylist(playlistId):
     playlistId=playlistId
 
     def getChannelStats(youtube, playlistId):
-        request=youtube.playlistItems().list(part='snippet,contentDetails',playlistId=playlistId, maxResults=50)
+        request=youtube.playlistItems().list(part='snippet,contentDetails',playlistId=playlistId, maxResults=1000)
         response=request.execute()
         return response
 
@@ -24,10 +24,8 @@ def collectDataFromYoutubeForPlaylist(playlistId):
 
 def collectDataFromYoutubeForVideo(videoId):
     def getChannelStats(youtube, videoId):
-        request=youtube.videos().list(part='snippet,contentDetails,statistics',id=videoId)
-        comment=youtube.commentThreads().list(part='snippet,replies',videoId=videoId)
+        request=youtube.videos().list(part='snippet,contentDetails,statistics',id=videoId,maxResults=1000 )
         response=request.execute()
-        commentresponse=comment.execute()
         response.update
         return response
 
